@@ -68,7 +68,7 @@
   (-> x (activation w) ((activation-function activation-fn))))
 
 (defmulti linear-model
-  (fn [name _] :regression))
+  (fn [name _] name))
 
 (defmethod linear-model :regression
   [_ {:keys [w basis-fns activation-fn]}]
