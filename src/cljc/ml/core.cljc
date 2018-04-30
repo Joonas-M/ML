@@ -189,22 +189,32 @@
                   :information-gain information-gain)
         explained-data (explained-variable data)
         explaining-data-sets (dissoc data explained-variable)]
-    (if (<= (count explained-data) stop-criterion)
+    (if (or (<= (count explained-data) stop-criterion)
+            (= 1 (count (into #{} explained-data))))
       {:leaf (most-common-value explained-data)}
       (let [attribute-data (best-attribute explained-data explaining-data-sets cost-function)
             branches (attribute-branches (first (:data attribute-data)))
-            test (attribute-test attribute-data)]
-        (apply merge
-               {:test test}
-               (map (fn [branch]
-                      (let [new-data (form-branch-data data explained-variable test branch)
-                            n-new-data-points (-> new-data vals first count)
-                            n-data-points (-> data vals first count)]
-                        (cond
-                          (= 0 n-new-data-points) {:leaf nil}
-                          (= n-data-points n-new-data-points) {:leaf (first explained-data)}
-                          :else {branch (train-decision-tree (form-branch-data data explained-variable test branch) options)})))
-                    branches))))))
+            test (attribute-test attribute-data)
+            node (apply merge
+                        {:test test
+                         :attribute-data (update attribute-data :data #(-> % keys first))
+                         :n-data-points (or (:n-new-data-points options) (-> data vals first count))}
+                        (map (fn [branch]
+                               (let [new-data (form-branch-data data explained-variable test branch)
+                                     n-new-data-points (-> new-data vals first count)
+                                     n-data-points (-> data vals first count)]
+                                 (cond
+                                   (= 0 n-new-data-points) {:leaf nil
+                                                            :n-data-points n-new-data-points}
+                                   (= n-data-points n-new-data-points) {:leaf (first explained-data)
+                                                                        :n-data-points n-new-data-points}
+                                   :else {branch (train-decision-tree (form-branch-data data explained-variable test branch) (assoc options
+                                                                                                                               :n-data-points n-new-data-points))})))
+                             branches))]
+        (if (and (contains? node :test)
+                 (contains? node :leaf))
+          (select-keys node [:leaf])
+          node)))))
 
 (defn apply-tree [tree data]
   (if-let [test (:test tree)]
