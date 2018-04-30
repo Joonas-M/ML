@@ -5,5 +5,6 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0-alpha19"]
                  [org.clojure/clojurescript "1.9.660"]]
+  :profiles {:test {:dependencies [[org.clojure/data.csv "0.1.4"]]}}
 
   :source-paths ["src/cljc"])
