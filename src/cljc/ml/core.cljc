@@ -180,7 +180,13 @@
                                                                     :previous-split-point split-point))))
                                                             {:i 0 :best-split-value 0
                                                              :previous-split-point 0} bar))
-                                       :categorical "FOO"   ;;TODO
+                                       :categorical (let [foo (reduce (fn [{i :is :as result} x]
+                                                                        (let [y (get explained-data i)]
+                                                                          (update {} x #(if (nil? %) y (+ % y)))))
+                                                                      {:i 0} explaining-data)
+                                                          categories-in-order (map val
+                                                                                   (sort-by val (dissoc foo :i)))]
+                                                      )
                                        ))
                                    explaining-data-sets)]
     (last (sort-by :best-split-value possible-split-points))))
@@ -190,9 +196,9 @@
   (key (apply max-key #(-> % val count) (group-by identity values))))
 
 (defn attribute-branches
-  [[data-key explaining-data]]
+  [[data-key explaining-data] {binary-tree? :binary-tree?}]
   (case (:type (meta explaining-data))
-    :numerical [true false]
+    (:numerical binary-tree?) [true false]
     :categorical (distinct explaining-data)))
 
 (defn attribute-test
@@ -223,7 +229,9 @@
             (= 1 (count (into #{} explained-data))))
       {:leaf (most-common-value explained-data)}
       (let [attribute-data (best-attribute explained-data explaining-data-sets options)
-            branches (attribute-branches (first (:data attribute-data)))
+            _ (println "ATTRIBUTE DATA")
+            _ (clojure.pprint/pprint attribute-data)
+            branches (attribute-branches (first (:data attribute-data)) options)
             test (attribute-test attribute-data)
             node (apply merge
                         {:test test
