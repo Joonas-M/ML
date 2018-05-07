@@ -1,10 +1,9 @@
-(ns ml.core-test
+(ns ml.tree-test
   (:require [clojure.test :refer :all]
             [clojure.data.csv :as csv]
             [clojure.string :as clj-str]
             [clojure.java.io :as io]
-            [ml.core :refer :all]
-            [ml.helpers :refer :all]))
+            [ml.tree :refer :all]))
 
 (defn traverse-tree [tree opts]
   (cond
@@ -89,7 +88,7 @@
                                                                                  {:type :numerical}))})
                                                             parsed-iris-data))
                                                 {:y :species})
-        abalone-data-ready-for-training (with-meta (apply merge
+        #_#_abalone-data-ready-for-training (with-meta (apply merge
                                                           (map #(let [[k v] (first (:test %))]
                                                                   {k (with-meta v (if (= k :sex)
                                                                                     {:type :categorical}
@@ -98,7 +97,7 @@
                                                    {:y :rings})
 
         trained-iris-tree (train-decision-tree iris-data-ready-for-training {:stop-criterion 3 :cost-function :gini :binary-tree? true})
-        trained-abalone-tree (train-decision-tree abalone-data-ready-for-training {:stop-criterion 3 :cost-function :gini :binary-tree? true})
+        #_#_trained-abalone-tree (train-decision-tree abalone-data-ready-for-training {:stop-criterion 3 :cost-function :gini :binary-tree? true})
         iris-test-data (map-vecs->vec-maps (apply merge (map :train parsed-iris-data)))]
     (is (= iris-tree (traverse-tree trained-iris-tree {:attribute-data #(update % :split-point (fn [value]
                                                                                     (format "%.3f" value)))
