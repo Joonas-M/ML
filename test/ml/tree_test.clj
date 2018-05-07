@@ -5,18 +5,6 @@
             [clojure.java.io :as io]
             [ml.tree :refer :all]))
 
-(defn traverse-tree [tree opts]
-  (cond
-    (and (map? tree) (contains? tree :leaf)) (update tree :leaf #((or (:leaf opts) identity) %))
-    (and (map? tree) (contains? tree :test)) (into {}
-                                                   (map (fn [[tree-key tree-value]]
-                                                          (let [keys-in-every-node #{:test :attribute-data :n-data-points}]
-                                                            (if (keys-in-every-node tree-key)
-                                                              [tree-key ((or (tree-key opts) identity) tree-value)]
-                                                              [tree-key (traverse-tree tree-value opts)])))
-                                                        tree))
-    :else tree))
-
 (defn read-csv [path]
   (with-open [reader (io/reader path)]
     (doall
@@ -34,18 +22,18 @@
 
 (def iris-tree
   {:test "test-fn"
-   :attribute-data {:cost 1/3 :data :petal-length :split-point "2.500"}
+   :attribute-data {:cost 1/3 :data-key :petal-length :split-point "2.500" :branches [true false]}
    :n-data-points 75
    true {:leaf "setosa"}
    false {:test "test-fn"
-          :attribute-data {:cost 2/27 :data :petal-length :split-point "4.800"}
+          :attribute-data {:cost 2/27 :data-key :petal-length :split-point "4.800" :branches [true false]}
           :n-data-points 50
           true {:leaf "versicolor"}
           false {:test "test-fn"
-                 :attribute-data {:cost 4/45 :data :petal-width :split-point "1.750"}
+                 :attribute-data {:cost 4/45 :data-key :petal-width :split-point "1.750" :branches [true false]}
                  :n-data-points 27
                  true {:test "test-fn"
-                       :attribute-data {:cost 4/15 :data :petal-width :split-point "1.550"}
+                       :attribute-data {:cost 4/15 :data-key :petal-width :split-point "1.550" :branches [true false]}
                        :n-data-points 5
                        true {:leaf "virginica"}
                        false {:leaf "versicolor"}}

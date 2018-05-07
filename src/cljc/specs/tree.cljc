@@ -5,10 +5,14 @@
 
 (s/def ::pos-int (s/and int? #(> % 0)))
 
+(s/def ::vector-of-same-type-data (s/or :number-coll (s/coll-of number? :kind vector?)
+                                        :string-coll (s/coll-of string? :kind vector?)
+                                        :keyword-coll (s/coll-of keyword? :kind vector?)))
+
+;; train-decision-tree specs
+
 (s/def ::tree-input-data-values (s/and #(->> % meta :type #{:categorical :numerical})
-                                       (s/or :number-coll (s/coll-of number? :kind vector?)
-                                             :string-coll (s/coll-of string? :kind vector?)
-                                             :keyword-coll (s/coll-of keyword? :kind vector?))))
+                                       ::vector-of-same-type-data))
 
 (s/def ::tree-input-data (s/with-gen (s/or :empty {}
                                            :not-empty (s/and (s/map-of keyword? ::tree-input-data-values)
@@ -48,9 +52,13 @@
 (s/def ::leaf any?)
 (s/def ::test fn?)
 (s/def ::cost number?)
-(s/def ::data any?)
+(s/def ::best-split-value number?)
+(s/def ::branches (s/or :binary-tree #(= % [true false])
+                        :not-binary-tree (s/coll-of any?)))
+(s/def ::data-key keyword?)
 (s/def ::split-point any?)
-(s/def ::attribute-data (s/keys :req-un [::cost ::data ::split-point]))
+(s/def ::attribute-data (s/keys :req-un [::split-point ::branches ::data-key]
+                                :req-opt [::cost ::best-split-value]))
 (s/def ::n-data-points ::pos-int)
 
 (s/def ::tree (s/or
@@ -65,4 +73,23 @@
 
 (s/fdef tree/train-decision-tree
   :args (s/cat :data ::tree-input-data :options ::tree-input-options)
-  :ret ::tree)
+  :ret ::tree
+  :fn #(if (-> % :args :options :binary-tree?)
+         (tree/test-tree (fn [node]
+                           (or (= (keys node) [:test :attribute-data :n-data-points true false])
+                               (contains? node :leaf)))
+                         (:ret %)
+                         {})
+         true))
+
+;; best-attribute specs
+
+(s/def ::vector-of-data (s/and #(->> % meta :type #{:categorical :numerical})
+                               ::vector-of-same-type-data))
+
+(s/def ::explained-data ::vector-of-data)
+(s/def ::explaining-data-sets (s/map-of keyword? ::vector-of-data))
+
+(s/fdef tree/best-attribute
+  :args (s/cat :explained-data ::explained-data :explaining-data-sets ::explaining-data-sets :options ::tree-input-options)
+  :ret ::attribute-data)
